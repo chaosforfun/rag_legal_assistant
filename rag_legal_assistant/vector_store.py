@@ -63,11 +63,22 @@ class VectorStore:
             doc_map = {doc.id: doc.content for doc in docs}
             if not vectors:
                 return
-            embeddings = [self._deserialize(v.values) for v in vectors]
-            texts = [doc_map.get(v.doc_id, "") for v in vectors]
-            vecs = np.array(embeddings).astype("float32")
+            
+            # 过滤出维度匹配的向量
+            valid_embeddings = []
+            valid_texts = []
+            for v in vectors:
+                emb = self._deserialize(v.values)
+                if len(emb) == self.dim:
+                    valid_embeddings.append(emb)
+                    valid_texts.append(doc_map.get(v.doc_id, ""))
+            
+            if not valid_embeddings:
+                return
+                
+            vecs = np.array(valid_embeddings).astype("float32")
             self.index.add(vecs)
-            self.store = texts
+            self.store = valid_texts
         finally:
             session.close()
 
