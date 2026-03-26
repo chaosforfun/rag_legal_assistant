@@ -12,7 +12,13 @@
       </el-form>
       <el-divider></el-divider>
       <div v-if="answer">
-        <h3>回答</h3>
+        <div class="answer-header">
+          <h3>回答</h3>
+          <el-tag v-if="elapsedTime !== null" type="info" size="small" effect="plain" class="time-tag">
+            <el-icon><Timer /></el-icon>
+            {{ elapsedTime }}ms
+          </el-tag>
+        </div>
         <el-card><p>{{ answer }}</p></el-card>
       </div>
     </el-main>
@@ -22,20 +28,25 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { Timer } from '@element-plus/icons-vue'
 
 const question = ref('')
 const answer = ref('')
 const loading = ref(false)
+const elapsedTime = ref(null)
 
 const askQuestion = async () => {
   if (!question.value) return
   loading.value = true
+  elapsedTime.value = null
+  const startTime = performance.now()
   try {
     const resp = await axios.post('http://localhost:8000/query', { question: question.value })
     answer.value = resp.data.answer
   } catch (err) {
     answer.value = `请求失败: ${err}`
   } finally {
+    elapsedTime.value = Math.round(performance.now() - startTime)
     loading.value = false
   }
 }
@@ -45,5 +56,22 @@ const askQuestion = async () => {
 .layout {
   min-height: 100vh;
   padding: 20px;
+}
+
+.answer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.answer-header h3 {
+  margin: 0;
+}
+
+.time-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 </style>
