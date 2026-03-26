@@ -8,9 +8,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.4.0",
+    "@element-plus/icons-vue": "^2.3.2",
     "axios": "^1.6.7",
-    "element-plus": "^2.5.5"
+    "element-plus": "^2.5.5",
+    "vue": "^3.4.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.6.2",
