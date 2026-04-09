@@ -1,84 +1,84 @@
 from typing import List, Tuple
 
-import numpy as np
-import faiss
-from sqlalchemy import create_engine, Column, Integer, Text
-from sqlalchemy.orm import sessionmaker, declarative_base
+from pymilvus import (
+    Collection,
+    CollectionSchema,
+    DataType,
+    FieldSchema,
+    connections,
+    utility,
+)
 
-from .config import DATABASE_URL, VECTOR_DIM
+from .config import (
+    MILVUS_COLLECTION,
+    MILVUS_HOST,
+    MILVUS_INDEX_TYPE,
+    MILVUS_METRIC_TYPE,
+    MILVUS_NLIST,
+    MILVUS_NPROBE,
+    MILVUS_PORT,
+    VECTOR_DIM,
+)
 
-Base = declarative_base()
-
-class Document(Base):
-    __tablename__ = "documents"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(Text, nullable=False)
-
-class Vector(Base):
-    __tablename__ = "vectors"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    doc_id = Column(Integer, nullable=False)
-    dim = Column(Integer, default=VECTOR_DIM)
-    values = Column(Text, nullable=False)
 
 class VectorStore:
     def __init__(self, dim: int = VECTOR_DIM):
         self.dim = dim
-        self.index = faiss.IndexFlatL2(dim)
-        self.engine = create_engine(DATABASE_URL)
-        Base.metadata.create_all(self.engine)
-        self.Session = sessionmaker(bind=self.engine)
-        self.store: List[str] = []
+        self.collection_name = MILVUS_COLLECTION
+        connections.connect(alias="default", host=MILVUS_HOST, port=MILVUS_PORT)
+        self.collection = self._get_or_create_collection()
+        self.collection.load()
 
-    def _deserialize(self, vec_text: str) -> List[float]:
-        return [float(v) for v in vec_text.split(",") if v]
+    def _get_or_create_collection(self) -> Collection:
+        if utility.has_collection(self.collection_name):
+            return Collection(self.collection_name)
 
-    def _serialize(self, vectors: List[List[float]]) -> List[str]:
-        return [",".join(str(v) for v in vec) for vec in vectors]
+        fields = [
+            FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
+            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=self.dim),
+            FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
+        ]
+        schema = CollectionSchema(fields, description="Legal document vectors")
+        collection = Collection(self.collection_name, schema)
+
+        index_params = {
+            "index_type": MILVUS_INDEX_TYPE,
+            "metric_type": MILVUS_METRIC_TYPE,
+            "params": {"nlist": MILVUS_NLIST},
+        }
+        if MILVUS_INDEX_TYPE.upper() == "FLAT":
+            index_params["params"] = {}
+        collection.create_index(field_name="embedding", index_params=index_params)
+        return collection
 
     def add(self, embeddings: List[List[float]], texts: List[str]):
-        vecs = np.array(embeddings).astype("float32")
-        self.index.add(vecs)
-        self.store.extend(texts)
-        serialized = self._serialize(embeddings)
-
-        session = self.Session()
-        try:
-            for text, vec in zip(texts, serialized):
-                doc = Document(content=text)
-                session.add(doc)
-                session.flush()
-                session.add(Vector(doc_id=doc.id, values=vec))
-            session.commit()
-        finally:
-            session.close()
-
-    def load_from_db(self):
-        session = self.Session()
-        try:
-            vectors = session.query(Vector).all()
-            docs = session.query(Document).all()
-            doc_map = {doc.id: doc.content for doc in docs}
-            if not vectors:
-                return
-            embeddings = [self._deserialize(v.values) for v in vectors]
-            texts = [doc_map.get(v.doc_id, "") for v in vectors]
-            vecs = np.array(embeddings).astype("float32")
-            self.index.add(vecs)
-            self.store = texts
-        finally:
-            session.close()
+        if not embeddings or not texts:
+            return
+        rows = [
+            {"embedding": embedding, "content": text}
+            for embedding, text in zip(embeddings, texts)
+        ]
+        self.collection.insert(rows)
+        self.collection.flush()
 
     def search(self, query_emb: List[float], k: int = 3) -> List[Tuple[str, float]]:
-        if self.index.ntotal == 0:
-            self.load_from_db()
-        query = np.array([query_emb]).astype("float32")
-        distances, indices = self.index.search(query, k)
-        results = []
-        for idx, dist in zip(indices[0], distances[0]):
-            if idx == -1 or idx >= len(self.store):
-                continue
-            results.append((self.store[idx], float(dist)))
-        return results
+        search_params = {"metric_type": MILVUS_METRIC_TYPE, "params": {"nprobe": MILVUS_NPROBE}}
+        if MILVUS_INDEX_TYPE.upper() == "FLAT":
+            search_params = {"metric_type": MILVUS_METRIC_TYPE, "params": {}}
+
+        results = self.collection.search(
+            data=[query_emb],
+            anns_field="embedding",
+            param=search_params,
+            limit=k,
+            output_fields=["content"],
+        )
+        hits = results[0] if results else []
+        output: List[Tuple[str, float]] = []
+        for hit in hits:
+            if hasattr(hit, "entity") and hit.entity is not None:
+                text = hit.entity.get("content")
+            else:
+                text = hit.get("content")
+            output.append((text, float(hit.distance)))
+        return output

@@ -3,7 +3,7 @@
 ## 项目简介
 
 - 目标：为法律/合规人员提供快速法规检索与问答
-- 架构：FastAPI 服务 + 向量数据库（PostgreSQL + pgvector/FAISS）+ Vue 前端 + DeepSeek 大模型
+- 架构：FastAPI 服务 + 向量数据库（Milvus）+ Vue 前端 + DeepSeek 大模型
 - 流程：
   1. 数据导入：解析法规文本，生成向量并存入数据库
   2. 检索：根据用户问题向量化检索相似条文
