@@ -1,12 +1,12 @@
 <template>
   <el-container class="layout">
     <el-header>
-      <h2>法规 RAG 助手</h2>
+      <h2>RAG 知识库助手</h2>
     </el-header>
     <el-main>
       <el-form @submit.prevent>
         <el-form-item label="问题">
-          <el-input type="textarea" v-model="question" rows="4" placeholder="请输入法律法规问题"></el-input>
+          <el-input type="textarea" v-model="question" rows="4" placeholder="请输入您的问题"></el-input>
         </el-form-item>
         <el-button type="primary" :loading="loading" @click="askQuestion">提问</el-button>
       </el-form>

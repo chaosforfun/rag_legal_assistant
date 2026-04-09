@@ -38,7 +38,7 @@ class VectorStore:
             FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=self.dim),
             FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
         ]
-        schema = CollectionSchema(fields, description="Legal document vectors")
+        schema = CollectionSchema(fields, description="Knowledge document vectors")
         collection = Collection(self.collection_name, schema)
 
         index_params = {

@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from typing import List
 
-def load_legal_documents(data_dir: str) -> List[dict]:
+
+def load_documents(data_dir: str) -> List[dict]:
     docs = []
     for root, _, files in os.walk(data_dir):
         for fname in files:

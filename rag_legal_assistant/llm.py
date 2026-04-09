@@ -4,6 +4,7 @@ import requests
 
 from .config import DEEPSEEK_API_KEY, DEEPSEEK_API_BASE, DEEPSEEK_MODEL
 
+
 class LLMClient:
     def __init__(self):
         self.mock_mode = not DEEPSEEK_API_KEY
@@ -13,7 +14,7 @@ class LLMClient:
     def generate(self, question: str, contexts: List[str]) -> str:
         if self.mock_mode:
             if not contexts:
-                return "系统提示：DEEPSEEK_API_KEY 未配置。请在 .env 文件中设置您的 DeepSeek API 密钥后再使用问答功能。\n\n同时，数据库中暂无法规数据，请先运行 python scripts/ingest_data.py 导入数据。"
+                return "系统提示：DEEPSEEK_API_KEY 未配置。请在 .env 文件中设置您的 DeepSeek API 密钥后再使用问答功能。\n\n同时，数据库中暂无文档数据，请先运行 python scripts/ingest_data.py 导入数据。"
             context_text = "\n".join([f"[{idx}] {ctx[:200]}..." for idx, ctx in enumerate(contexts, 1)])
             return f"[模拟模式] 请设置 DEEPSEEK_API_KEY 环境变量以启用真实回答。\n\n问题: {question}\n\n找到的参考资料:\n{context_text}\n\n提示: 请设置 DEEPSEEK_API_KEY 环境变量后重启服务。"
 
@@ -25,7 +26,7 @@ class LLMClient:
         payload = {
             "model": DEEPSEEK_MODEL,
             "messages": [
-                {"role": "system", "content": "你是法律法规助手，只能基于给定参考资料回答"},
+                {"role": "system", "content": "你是知识库助手，只能基于给定参考资料回答"},
                 {"role": "user", "content": prompt},
             ],
         }

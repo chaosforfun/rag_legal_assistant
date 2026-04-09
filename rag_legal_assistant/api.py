@@ -9,7 +9,7 @@ from .retriever import Retriever
 from .llm import LLMClient
 from .rag_pipeline import RAGPipeline
 
-app = FastAPI(title="法规RAG助手")
+app = FastAPI(title="RAG知识库助手")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
