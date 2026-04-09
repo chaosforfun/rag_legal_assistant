@@ -18,7 +18,10 @@ def main():
 
     texts = [d["text"] for d in docs]
     embeddings = embed_model.embed(texts)
-    vector_store.add(embeddings, texts)
+    # 逐条添加文档到向量数据库
+    # 因为 add 方法现在只支持单条数据插入
+    for embedding, text in zip(embeddings, texts):
+        vector_store.add(embedding, text)
     print(f"Indexed {len(texts)} documents.")
 
 

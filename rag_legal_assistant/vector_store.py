@@ -51,14 +51,14 @@ class VectorStore:
         collection.create_index(field_name="embedding", index_params=index_params)
         return collection
 
-    def add(self, embeddings: List[List[float]], texts: List[str]):
-        if not embeddings or not texts:
+    def add(self, embedding: List[float], text: str):
+        # 添加单条向量数据到 Milvus 集合
+        # 参数 embedding: 文本的向量表示，维度为 self.dim
+        # 参数 text: 原始文本内容
+        if not embedding or not text:
             return
-        rows = [
-            {"embedding": embedding, "content": text}
-            for embedding, text in zip(embeddings, texts)
-        ]
-        self.collection.insert(rows)
+        row = {"embedding": embedding, "content": text}
+        self.collection.insert([row])
         self.collection.flush()
 
     def search(self, query_emb: List[float], k: int = 3) -> List[Tuple[str, float]]:
