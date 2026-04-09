@@ -12,13 +12,13 @@
 ## 目录结构
 
 ```
-rag_legal_assistant/
+rag_assistant/
 ├── README.md
 ├── requirements.txt
 ├── data/
 │   └── documents/
 ├── artifacts/
-├── rag_legal_assistant/
+├── rag_assistant/
 │   ├── __init__.py
 │   ├── api.py
 │   ├── config.py
@@ -44,7 +44,7 @@ rag_legal_assistant/
 
 1. 准备文档文本到 `data/documents` 目录
 2. `python scripts/ingest_data.py` 向数据库写入向量
-3. `uvicorn rag_legal_assistant.api:app --reload`
+3. `uvicorn rag_assistant.api:app --reload`
 4. 前端目录执行 `npm install && npm run dev`
 
 ## 环境变量

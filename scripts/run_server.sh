@@ -1,2 +1,2 @@
 #!/bin/bash
-uvicorn rag_legal_assistant.api:app --host 0.0.0.0 --port 8000
+uvicorn rag_assistant.api:app --host 0.0.0.0 --port 8000

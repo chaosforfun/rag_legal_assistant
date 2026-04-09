@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from rag_legal_assistant.data_loader import load_documents
-from rag_legal_assistant.embedding import EmbeddingModel
-from rag_legal_assistant.vector_store import VectorStore
+from rag_assistant.data_loader import load_documents
+from rag_assistant.embedding import EmbeddingModel
+from rag_assistant.vector_store import VectorStore
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data/documents"
 
